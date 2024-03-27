@@ -84,6 +84,14 @@ app.post('/upload', upload.fields([{ name: 'pdfRxForm', maxCount: 100 }, { name:
                 for (const file of files) {
                     const filePath = file.path;
                     const fileName = file.originalname;
+
+                    console.log(`Attempting to upload file: ${filePath}`);
+            
+                    // Check if the file exists
+                    if (!fs.existsSync(filePath)) {
+                        console.error(`File not found: ${filePath}`);
+                        continue; // Skip this file and proceed with the next one
+                    }
                     const fileMetadata = {
                         'name': fileName,
                         'parents': [subfolderId]
@@ -97,6 +105,18 @@ app.post('/upload', upload.fields([{ name: 'pdfRxForm', maxCount: 100 }, { name:
                         media: media,
                         fields: 'id'
                     });
+                    console.log(`File uploaded successfully: ${fileName} to folder ID ${subfolderId}`);
+                    
+                    // Right after a successful upload and before file deletion
+                    console.log(`Deleting file: ${filePath}`);
+                    fs.unlink(filePath, (err) => {
+                        if (err) {
+                            console.error(`Error deleting file: ${filePath}`, err);
+                        } else {
+                            console.log(`File deleted successfully: ${filePath}`);
+                        }
+                    });
+
                     // Remove file from local storage after upload
                     fs.unlinkSync(filePath);
                 }

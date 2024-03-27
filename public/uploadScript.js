@@ -1,72 +1,123 @@
-document.getElementById('uploadForm').addEventListener('submit', function(event) {
-    event.preventDefault(); // Prevent the default form submission
+document.addEventListener('DOMContentLoaded', function() {
+    let accumulatedFiles = {
+        'pdfRxForm': [],
+        'stlFile': []
+    };
 
-     // Get the button and spinner elements
-     const button = document.getElementById('uploadButton');
-     const spinner = document.getElementById('loadingSpinner');
- 
-     // Disable the button and show the spinner
-     button.disabled = true;
-     button.innerText = 'Submitting...'; // Optional: Change button text
-     spinner.style.display = 'block'; // Show spinner
-
-    const formData = new FormData(this);
-
-    fetch('/upload', { // Make sure this matches your server endpoint
-        method: 'POST',
-        body: formData
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.text().then(text => { throw new Error(`${text} (Status: ${response.status})`); });
+    function handleFileSelection(event, fileType) {
+        let files = event.target.files;
+        if (files) {
+            accumulatedFiles[fileType] = accumulatedFiles[fileType].concat(Array.from(files));
+            // Optionally update the UI to list the selected files
+            updateFileListDisplay(fileType);
         }
-        return response.json(); // Parse the JSON response
-    })
-    .then(data => {
-        if (data.success) {
-            console.log('File uploaded successfully:');
-            // Hide the form
+    }
+
+    function updateFileListDisplay(fileType) {
+        const fileListContainerId = fileType === 'pdfRxForm' ? 'pdfRxList' : 'stlFileList';
+        const fileListContainer = document.getElementById(fileListContainerId);
+        fileListContainer.innerHTML = ''; // Clear current list
+        accumulatedFiles[fileType].forEach(file => {
+            const fileElement = document.createElement('div');
+            fileElement.textContent = file.name;
+            fileListContainer.appendChild(fileElement);
+        });
+    }
+
+    document.getElementById('pdfRxForm').addEventListener('change', function(event) {
+        handleFileSelection(event, 'pdfRxForm');
+    });
+
+    document.getElementById('stlFile').addEventListener('change', function(event) {
+        handleFileSelection(event, 'stlFile');
+    });
+
+    document.getElementById('uploadForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const formData = new FormData();
+        Object.keys(accumulatedFiles).forEach(key => {
+            accumulatedFiles[key].forEach(file => {
+                formData.append(file.type === 'application/pdf' ? 'pdfRxForm' : 'stlFile', file, file.name);
+            });
+        });
+        formData.append('name', document.getElementById('name').value);
+        formData.append('email', document.getElementById('email').value);
+        // Manage UI elements for loading state
+        const button = document.getElementById('uploadButton');
+        const spinner = document.getElementById('loadingSpinner');
+        button.disabled = true;
+        button.innerText = 'Submitting...';
+        spinner.style.display = 'block';
+
+        // Perform the submission to the server
+        fetch('/upload', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => { throw new Error(`${text} (Status: ${response.status})`); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('File uploaded successfully:', data);
             document.querySelector('.upload-form-container').style.display = 'none';
-            
-            // Show the submission message
             const submissionMessage = document.getElementById('submissionMessage');
             submissionMessage.style.display = 'block'; // Make the message visible
-
-            // Optionally, you can scroll to the submission message so the user sees it immediately
+            document.getElementById('submitNewCaseButton').style.display = 'block'; // Show the "Submit New Case" button
             submissionMessage.scrollIntoView({ behavior: 'smooth' });
-        } else {
-            // Handle server-sent errors (if 'data.error' exists)
-            console.error('Error uploading file:', data.error);
-            alert('Error uploading file: ' + data.error);
-        }
-        // Inside the .then block after data.success check
-        document.getElementById('submitNewCaseButton').style.display = 'block'; // Display the "Submit New Case" button
-
-    })
-    .catch(error => {
-        // Handle network errors or other fetch-related errors
-        console.error('Failed to send file:', error);
-        alert('Failed to send file: ' + error.message);
-    })
-    .finally(() => {
-        // Re-enable the button and hide the spinner after the request is complete
-        button.disabled = false;
-        button.innerText = 'Submit'; // Reset button text
-        spinner.style.display = 'none'; // Hide spinner
+        })
+        .catch(error => {
+            console.error('Failed to send file:', error);
+            alert('Failed to send file: ' + error.message);
+        })
+        .finally(() => {
+            button.disabled = false;
+            button.innerText = 'Submit';
+            spinner.style.display = 'none';
+        });
+    });
+    
+    // Reset the form for a new submission
+    document.getElementById('submitNewCaseButton').addEventListener('click', function() {
+        document.getElementById('uploadForm').reset();
+        document.getElementById('submissionMessage').style.display = 'none';
+        document.querySelector('.upload-form-container').style.display = 'block';
+        document.querySelector('.upload-form-container').scrollIntoView({ behavior: 'smooth' });
+        // Also clear accumulated files
+        accumulatedFiles = { 'pdfRxForm': [], 'stlFile': [] };
     });
 });
-// After the existing form submission event listener
 
 document.getElementById('submitNewCaseButton').addEventListener('click', function() {
-    // Reset the form
-    document.getElementById('uploadForm').reset();
+    // Refresh the page
+    window.location.reload();
+});
+document.querySelectorAll('.nav-item').forEach(function(navItem) {
+    let timeoutId;
 
-    // Hide the submission message
-    document.getElementById('submissionMessage').style.display = 'none';
+    navItem.addEventListener('mouseover', function() {
+        clearTimeout(timeoutId); // Clear any existing timeouts
+        this.querySelector('.dropdown-content').style.display = 'block';
+    });
 
-    // Show the form again
-    document.querySelector('.upload-form-container').style.display = 'block';
+    navItem.addEventListener('mouseout', function() {
+        const dropdownContent = this.querySelector('.dropdown-content');
+        // Set a timeout to hide the dropdown, allows moving to the dropdown content
+        timeoutId = setTimeout(function() {
+            dropdownContent.style.display = 'none';
+        }, 500); // Time in ms (0.5 seconds)
+    });
 
-    // Scroll to the form so the user can see it
-    document.querySelector('.upload-form-container').scrollIntoView({ behavior: 'smooth' });
+    // Prevent the dropdown from closing when the mouse is over the dropdown content
+    navItem.querySelector('.dropdown-content').addEventListener('mouseover', function() {
+        clearTimeout(timeoutId);
+    });
+
+    navItem.querySelector('.dropdown-content').addEventListener('mouseout', function() {
+        timeoutId = setTimeout(function() {
+            dropdownContent.style.display = 'none';
+        }, 500);
+    });
 });

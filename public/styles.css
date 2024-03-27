@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;700&display=swap');
+
 * {
     box-sizing: border-box; /* Include padding and border in an element's total width and height */
 }
@@ -6,7 +9,7 @@ html, body {
     height: 100%; /* Full height */
     margin: 0;
     padding: 0;
-    font-family: 'Raleway', sans-serif;
+    font-family: 'Open Sans', sans-serif;
 }
 
 .body-content { /* Container for content */
@@ -184,3 +187,51 @@ textarea#note::placeholder {
 #submitNewCaseButton:hover {
     background-color: #0056b3; /* Darken the button on hover */
 }
+
+/* Introduction Section Styling */
+.intro-section h2 {
+    font-family: 'Roboto', sans-serif;
+    color: #005a87;
+}
+
+.intro-section p {
+    font-family: 'Open Sans', sans-serif;
+}
+
+/* Products Container & Items */
+.products-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    padding: 20px;
+}
+
+.product-item {
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    margin: 10px;
+    padding: 20px;
+    width: calc(33.333% - 20px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.product-item:hover {
+    transform: scale(1.05);
+}
+
+/* Button Styling */
+button {
+    background-color: #007bff;
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 16px;
+    border-radius: 5px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
